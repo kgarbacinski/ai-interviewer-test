@@ -6,13 +6,16 @@ import queue
 
 st.title("Audio Input Form")
 
-NUM_AUDIO_INPUTS = 3  # Number of audio inputs
+PREDEFINED_QUESTIONS = ["What are your strenghts?", "How are you?"]
+NUM_AUDIO_INPUTS = len(PREDEFINED_QUESTIONS)  # Number of audio inputs
 
 recorded_audios = [None] * NUM_AUDIO_INPUTS
 uploaded_audios = [None] * NUM_AUDIO_INPUTS
 
+
+
 for i in range(NUM_AUDIO_INPUTS):
-    st.header(f"Audio Input {i+1}")
+    st.header(PREDEFINED_QUESTIONS[i])
     option = st.selectbox(f"Choose input method for Audio {i+1}", ("Record", "Upload"), key=f"input_method_{i}")
 
     if option == "Record":
