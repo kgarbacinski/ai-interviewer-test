@@ -4,7 +4,7 @@ import asyncio
 import numpy as np
 import queue
 
-st.title("Audio Input Form")
+st.title("Interview Questions.")
 
 PREDEFINED_QUESTIONS = ["What are your strenghts?", "How are you?"]
 NUM_AUDIO_INPUTS = len(PREDEFINED_QUESTIONS)  # Number of audio inputs
