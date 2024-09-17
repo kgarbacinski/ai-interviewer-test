@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
-from st_audiorec import st_audiorec  # Correct import
+from audiorecorder import audiorecorder
+import base64
 
 # Hardcoded questions
 questions = [
@@ -44,13 +45,17 @@ if isinstance(current_idx, int):
     else:
         st.write("No answer recorded yet.")
 
-    # Audio recorder for the current question
-    audio_bytes = st_audiorec()
+    # Audio recorder for the current question using audiorecorder library
+    audio = audiorecorder("Click to record", "Recording...")
 
-    # If the user has recorded something, save the response
-    if audio_bytes is not None:
-        st.session_state.recordings[current_idx] = audio_bytes
-        st.success(f"Recording for Question {current_idx + 1} saved!")
+    # Save the recording once it's done
+    if len(audio) > 0:
+        st.write("Recording complete")
+        # The audiorecorder returns the recording as bytes, we can directly store it
+        st.session_state.recordings[current_idx] = audio
+
+        # Optionally play back the recorded audio to the user
+        st.audio(audio, format="audio/wav")
 
     # Button to move to the next question
     if st.button("Next Question"):
