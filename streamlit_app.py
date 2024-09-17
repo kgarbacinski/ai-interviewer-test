@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from st_audiorec import st_audiorec  # Correct library name
+from st_audiorec import st_audiorec  # Correct import
 
 # Hardcoded questions
 questions = [
@@ -9,12 +9,16 @@ questions = [
     "What are your goals for this week?"
 ]
 
-# Initialize session state for audio responses
+# Initialize session state for audio responses and active recording question
 if 'audio_responses' not in st.session_state:
     st.session_state.audio_responses = {}
 
+if 'active_question' not in st.session_state:
+    st.session_state.active_question = None
+
 st.title("Voice-based Questionnaire")
 
+# Iterate through the questions
 for idx, question in enumerate(questions):
     st.subheader(f"Question {idx + 1}: {question}")
     
@@ -22,15 +26,26 @@ for idx, question in enumerate(questions):
     if question in st.session_state.audio_responses:
         st.write("Recorded Answer: (Re-record if needed)")
         # No need to use st.audio() because st_audiorec has a built-in player
-    
-    # Prompt to record answer
-    st.write("Click the button below to record your answer.")
-    audio_bytes = st_audiorec()  # Automatically provides the recording and playback interface
-    
+    else:
+        st.write("No answer recorded yet.")
+
+    # Create a button to record answer for each question
+    if st.button(f"Record Answer for Question {idx + 1}"):
+        st.session_state.active_question = idx
+
+# If there's an active question, show the recorder
+if st.session_state.active_question is not None:
+    active_idx = st.session_state.active_question
+    st.subheader(f"Recording for Question {active_idx + 1}: {questions[active_idx]}")
+
+    # Show the audio recorder for the active question
+    audio_bytes = st_audiorec()
+
+    # If audio is recorded, save it in session state
     if audio_bytes:
-        # Save the audio response to session state
-        st.session_state.audio_responses[question] = audio_bytes
-        st.success(f"Recording for Question {idx + 1} saved!")
+        st.session_state.audio_responses[questions[active_idx]] = audio_bytes
+        st.success(f"Recording for Question {active_idx + 1} saved!")
+        st.session_state.active_question = None  # Reset active question after saving
 
 # Submit button
 if st.button("Submit All Responses"):
