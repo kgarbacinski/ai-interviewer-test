@@ -1,0 +1,2 @@
+ffmpeg  
+frei0r-plugins 
