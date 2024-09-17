@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from streamlit_audiorec import st_audiorec
+from st_audiorec import st_audiorec
 
 # Hardcoded questions
 questions = [
