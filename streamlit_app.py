@@ -1,7 +1,7 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings, AudioProcessorBase
 import numpy as np
-import queue
+import av
 
 st.title("Interview Questions.")
 
@@ -13,42 +13,44 @@ if "recorded_audios" not in st.session_state:
     st.session_state.recorded_audios = [None] * NUM_AUDIO_INPUTS
 if "uploaded_audios" not in st.session_state:
     st.session_state.uploaded_audios = [None] * NUM_AUDIO_INPUTS
-if "audio_frames" not in st.session_state:
-    st.session_state.audio_frames = [None] * NUM_AUDIO_INPUTS
 if "is_recording" not in st.session_state:
     st.session_state.is_recording = [False] * NUM_AUDIO_INPUTS  # Status of recording for each stage
 
 
-def collect_audio(i, webrtc_ctx):
-    """Collect audio frames while recording."""
-    audio_frames = []
-    if webrtc_ctx.audio_receiver:
-        status_indicator = st.empty()
+class AudioProcessor(AudioProcessorBase):
+    def __init__(self):
+        self.frames = []
 
-        # Only start collecting audio if the context is playing
-        if webrtc_ctx.state.playing:
-            st.session_state.is_recording[i] = True
-            status_indicator.write("Recording...")
+    def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
+        # Convert audio frame to numpy array and flatten
+        audio_data = frame.to_ndarray().flatten()
 
-            try:
-                audio_frame = webrtc_ctx.audio_receiver.get_frame(timeout=1)
-                audio_ndarray = audio_frame.to_ndarray().flatten()
+        # Accumulate frames
+        self.frames.append(audio_data)
 
-                # Accumulate audio frames for the current question
-                if st.session_state.audio_frames[i] is None:
-                    st.session_state.audio_frames[i] = audio_ndarray
-                else:
-                    st.session_state.audio_frames[i] = np.concatenate(
-                        [st.session_state.audio_frames[i], audio_ndarray]
-                    )
-            except queue.Empty:
-                pass
+        return frame
 
-        # When the user clicks stop (automatically stops when stream stops)
-        if not webrtc_ctx.state.playing and st.session_state.audio_frames[i] is not None:
+    def get_audio_data(self):
+        if self.frames:
+            return np.concatenate(self.frames)
+        return None
+
+
+def handle_recording(i, webrtc_ctx):
+    """Handle the audio recording using WebRTC."""
+    if webrtc_ctx.state.playing:
+        st.session_state.is_recording[i] = True
+        st.write(f"Recording for question {i+1} is active...")
+    else:
+        if st.session_state.is_recording[i]:
+            st.write(f"Recording for question {i+1} has stopped.")
             st.session_state.is_recording[i] = False
-            status_indicator.write("Recording stopped.")
-            st.session_state.recorded_audios[i] = st.session_state.audio_frames[i]
+            audio_data = webrtc_ctx.audio_processor.get_audio_data()
+            if audio_data is not None:
+                st.session_state.recorded_audios[i] = audio_data
+                st.write(f"Audio for question {i+1} recorded successfully.")
+        else:
+            st.write(f"Recording for question {i+1} is not active.")
 
 
 for i in range(NUM_AUDIO_INPUTS):
@@ -69,17 +71,14 @@ for i in range(NUM_AUDIO_INPUTS):
                     "video": False,
                 },
             ),
+            audio_processor_factory=AudioProcessor,  # Add audio processor
             async_processing=True,
         )
 
-        # Call the function to handle audio collection during recording
-        collect_audio(i, webrtc_ctx)
+        # Handle recording status and collect data
+        if webrtc_ctx.state.playing:
+            handle_recording(i, webrtc_ctx)
 
-        # Show whether recording is happening
-        if st.session_state.is_recording[i]:
-            st.write(f"Recording for question {i + 1} is active...")
-        else:
-            st.write(f"Recording for question {i + 1} is not active.")
     else:
         uploaded_file = st.file_uploader(f"Upload Audio {i+1}", type=["wav", "mp3"], key=f"uploaded_file_{i}")
         if uploaded_file is not None:
