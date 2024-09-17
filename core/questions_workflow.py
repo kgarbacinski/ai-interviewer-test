@@ -18,6 +18,7 @@ def send_to_api(question, audio_data):
 # Main function for the Streamlit app
 def run_workflow():
     st.title("Audio Recording Questionnaire")
+    st.image("images/snickers.png", caption="Images showing a snickers bar")
 
     # Hardcoded questions
     questions = [
