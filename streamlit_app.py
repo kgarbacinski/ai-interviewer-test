@@ -46,4 +46,26 @@ for idx, question in enumerate(questions):
 
 # Submit button
 if st.button("Submit All Responses"):
-    if len(st.session_state.audio_responses) == len(
+    if len(st.session_state.audio_responses) == len(questions):
+        st.write("Sending responses to API...")
+        
+        for question, audio in st.session_state.audio_responses.items():
+            # Prepare the audio file for upload
+            files = {
+                'audio': ('response.wav', audio, 'audio/wav')
+            }
+            data = {
+                'question': question
+            }
+            
+            try:
+                response = requests.post(
+                    "https://api.example.com/submit-audio",  # Replace with your API endpoint
+                    files=files,
+                    data=data
+                )
+                st.write(f"Sent response for '{question}' with status {response.status_code}")
+            except Exception as e:
+                st.error(f"Failed to send response for '{question}': {e}")
+    else:
+        st.error("Please record responses for all questions before submitting.")
