@@ -30,45 +30,20 @@ for idx, question in enumerate(questions):
         st.write("No answer recorded yet.")
 
     # Create a button to record answer for each question
-    if st.button(f"Record Answer for Question {idx + 1}"):
+    if st.button(f"Record Answer for Question {idx + 1}", key=f"record_btn_{idx}"):
         st.session_state.active_question = idx
 
-# If there's an active question, show the recorder
-if st.session_state.active_question is not None:
-    active_idx = st.session_state.active_question
-    st.subheader(f"Recording for Question {active_idx + 1}: {questions[active_idx]}")
+    # If this is the active question, show the recorder below it
+    if st.session_state.active_question == idx:
+        st.write(f"Recording for Question {idx + 1}:")
+        audio_bytes = st_audiorec()
 
-    # Show the audio recorder for the active question
-    audio_bytes = st_audiorec()
-
-    # If audio is recorded, save it in session state
-    if audio_bytes:
-        st.session_state.audio_responses[questions[active_idx]] = audio_bytes
-        st.success(f"Recording for Question {active_idx + 1} saved!")
-        st.session_state.active_question = None  # Reset active question after saving
+        # If audio is recorded, save it in session state
+        if audio_bytes:
+            st.session_state.audio_responses[questions[idx]] = audio_bytes
+            st.success(f"Recording for Question {idx + 1} saved!")
+            st.session_state.active_question = None  # Reset active question after saving
 
 # Submit button
 if st.button("Submit All Responses"):
-    if len(st.session_state.audio_responses) == len(questions):
-        st.write("Sending responses to API...")
-        
-        for question, audio in st.session_state.audio_responses.items():
-            # Prepare the audio file for upload
-            files = {
-                'audio': ('response.wav', audio, 'audio/wav')
-            }
-            data = {
-                'question': question
-            }
-            
-            try:
-                response = requests.post(
-                    "https://api.example.com/submit-audio",  # Replace with your API endpoint
-                    files=files,
-                    data=data
-                )
-                st.write(f"Sent response for '{question}' with status {response.status_code}")
-            except Exception as e:
-                st.error(f"Failed to send response for '{question}': {e}")
-    else:
-        st.error("Please record responses for all questions before submitting.")
+    if len(st.session_state.audio_responses) == len(
