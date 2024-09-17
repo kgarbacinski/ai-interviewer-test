@@ -46,7 +46,7 @@ if isinstance(current_idx, int):
         st.write("No answer recorded yet.")
 
     # Audio recorder for the current question using audiorecorder library
-    audio = audiorecorder("Click to record", "Recording...")
+    audio = audiorecorder(start_prompt="Start recording", stop_prompt="Stop recording", pause_prompt="", show_visualizer=True, key=None)
 
     # Save the recording once it's done
     if len(audio) > 0:
