@@ -32,8 +32,8 @@ def main():
     for idx, question in enumerate(questions):
         st.write(f"**Question {idx+1}:** {question}")
 
-        # Record button for the current question
-        audio = audiorecorder("Record", "Recording...")
+        # Record button for the current question with unique key
+        audio = audiorecorder("Record", "Recording...", key=f"audio_{idx}")
 
         # If there is a recorded audio, store it in the dictionary
         if len(audio) > 0:
