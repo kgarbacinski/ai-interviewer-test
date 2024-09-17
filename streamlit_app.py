@@ -1,107 +1,81 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings, AudioProcessorBase
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
+import requests
+import os
 import numpy as np
-import av
+import wave
 
-st.title("Interview Questions.")
+# Hardcoded questions
+questions = [
+    "What is your name?",
+    "How do you feel today?",
+    "What are your goals for this week?"
+]
 
-PREDEFINED_QUESTIONS = ["What are your strengths?", "How are you?"]
-NUM_AUDIO_INPUTS = len(PREDEFINED_QUESTIONS)  # Number of audio inputs
+# Dictionary to store user responses
+audio_responses = {}
 
-# Initialize session state for recorded audio data and recording status
-if "recorded_audios" not in st.session_state:
-    st.session_state.recorded_audios = [None] * NUM_AUDIO_INPUTS
-if "uploaded_audios" not in st.session_state:
-    st.session_state.uploaded_audios = [None] * NUM_AUDIO_INPUTS
-if "is_recording" not in st.session_state:
-    st.session_state.is_recording = [False] * NUM_AUDIO_INPUTS  # Status of recording for each stage
-
-
+# Define Audio Processor class for recording
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
-        self.frames = []
-
-    def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        # Convert audio frame to numpy array
-        audio_data = frame.to_ndarray()
-        
-        # Append to the frames buffer
-        self.frames.append(audio_data)
-
+        self.audio_frames = []
+    
+    def recv(self, frame):
+        self.audio_frames.append(frame)
         return frame
 
-    def get_audio_data(self):
-        # Combine all the audio frames
-        if len(self.frames) > 0:
-            return np.concatenate(self.frames, axis=1)
+def save_audio(frames, filename):
+    """ Save the audio frames as a wav file """
+    if len(frames) == 0:
         return None
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)  # 16 bits per sample
+        wf.setframerate(16000)
+        wf.writeframes(b''.join([frame.to_ndarray().tobytes() for frame in frames]))
 
+# Streamlit layout
+st.title("Voice-based Questionnaire")
 
-def handle_recording(i, webrtc_ctx):
-    """Handle the audio recording using WebRTC."""
-    if webrtc_ctx.state.playing:
-        st.session_state.is_recording[i] = True
-        st.write(f"Recording for question {i+1} is active...")
-    else:
-        if st.session_state.is_recording[i]:
-            st.write(f"Recording for question {i+1} has stopped.")
-            st.session_state.is_recording[i] = False
-            audio_data = webrtc_ctx.audio_processor.get_audio_data()
-            if audio_data is not None:
-                st.session_state.recorded_audios[i] = audio_data
-                st.write(f"Audio for question {i+1} recorded successfully.")
-        else:
-            st.write(f"Recording for question {i+1} is not active.")
-
-
-for i in range(NUM_AUDIO_INPUTS):
-    st.header(PREDEFINED_QUESTIONS[i])
-    option = st.selectbox(f"Choose input method for Audio {i+1}", ("Record", "Upload"), key=f"input_method_{i}")
-
-    if option == "Record":
-        st.write("Click on start to record audio.")
-        
-        webrtc_ctx = webrtc_streamer(
-            key=f"audio_{i}",
+for idx, question in enumerate(questions):
+    st.subheader(f"Question {idx + 1}: {question}")
+    
+    # Record button
+    if st.button(f"Record Answer for Question {idx + 1}"):
+        st.session_state[f'record_{idx}'] = webrtc_streamer(
+            key=f'webrtc_{idx}',
             mode=WebRtcMode.SENDONLY,
-            audio_receiver_size=256,
-            client_settings=ClientSettings(
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-                media_stream_constraints={
-                    "audio": True,
-                    "video": False,
-                },
-            ),
-            audio_processor_factory=AudioProcessor,  # Add audio processor
-            async_processing=True,
+            audio_receiver_size=1024,
+            audio_processor_factory=AudioProcessor
         )
+    
+    # If the recorder was created and we finished recording
+    if f'record_{idx}' in st.session_state and st.session_state[f'record_{idx}'].state.playing == False:
+        st.write(f"Recording for Question {idx + 1} finished.")
+        processor = st.session_state[f'record_{idx}'].audio_processor
+        filename = f"response_q{idx + 1}.wav"
+        
+        # Save the audio
+        save_audio(processor.audio_frames, filename)
+        audio_responses[question] = filename
+        st.audio(filename, format='audio/wav')
 
-        # Handle recording status and collect data
-        if webrtc_ctx.state.playing:
-            handle_recording(i, webrtc_ctx)
+# Submit button
+if st.button("Submit All Responses"):
+    if len(audio_responses) == len(questions):
+        st.write("Sending responses to API...")
 
+        # Simulating sending audio files to an external API
+        for question, filename in audio_responses.items():
+            # Read the saved audio file
+            with open(filename, 'rb') as f:
+                # Example of sending audio to an API (adjust URL and payload accordingly)
+                # response = requests.post(
+                #     "https://api.example.com/submit-audio",
+                #     files={"audio": f},
+                #     data={"question": question}
+                # )
+                
+            st.write(f"Sent response for '{question}' with status {response.status_code}")
     else:
-        uploaded_file = st.file_uploader(f"Upload Audio {i+1}", type=["wav", "mp3"], key=f"uploaded_file_{i}")
-        if uploaded_file is not None:
-            st.session_state.uploaded_audios[i] = uploaded_file
-
-# Button to submit the audio responses
-if st.button("Submit"):
-    st.header("Processing Results")
-    audio_inputs = []
-    
-    for i in range(NUM_AUDIO_INPUTS):
-        if st.session_state.recorded_audios[i] is not None:
-            st.write(f"Audio {i+1} was recorded.")
-            st.write(f"Recorded audio data shape: {st.session_state.recorded_audios[i].shape}")
-            # Here you can add code to process the recorded audio
-            audio_inputs.append(st.session_state.recorded_audios[i])
-        elif st.session_state.uploaded_audios[i] is not None:
-            st.write(f"Audio {i+1} was uploaded.")
-            st.audio(st.session_state.uploaded_audios[i])
-            # Here you can add code to process the uploaded audio
-            audio_inputs.append(st.session_state.uploaded_audios[i])
-        else:
-            st.write(f"No audio input for Audio {i+1}.")
-    
-    st.success("All audios have been processed.")
+        st.error("Please record responses for all questions.")
