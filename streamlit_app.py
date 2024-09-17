@@ -55,7 +55,7 @@ if isinstance(current_idx, int):
         st.session_state.recordings[current_idx] = audio
 
         # Optionally play back the recorded audio to the user
-        st.audio(audio, format="audio/wav")
+        st.audio(audio.export().read(), format="audio/wav")
 
     # Button to move to the next question
     if st.button("Next Question"):
@@ -103,7 +103,7 @@ else:
                     st.error(f"Failed to send response for '{question}': {e}")
         else:
             st.error("Please record responses for all questions before submitting.")
-    
+
     # Option to go back and review questions
     if st.button("Go Back"):
         st.session_state.current_question = len(questions) - 1  # Go back to the last question
