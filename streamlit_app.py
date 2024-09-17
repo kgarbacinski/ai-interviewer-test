@@ -1,18 +1,20 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
-import asyncio
 import numpy as np
 import queue
 
 st.title("Interview Questions.")
 
-PREDEFINED_QUESTIONS = ["What are your strenghts?", "How are you?"]
+PREDEFINED_QUESTIONS = ["What are your strengths?", "How are you?"]
 NUM_AUDIO_INPUTS = len(PREDEFINED_QUESTIONS)  # Number of audio inputs
 
-recorded_audios = [None] * NUM_AUDIO_INPUTS
-uploaded_audios = [None] * NUM_AUDIO_INPUTS
-
-
+# Initialize session state for recorded audio data
+if "recorded_audios" not in st.session_state:
+    st.session_state.recorded_audios = [None] * NUM_AUDIO_INPUTS
+if "uploaded_audios" not in st.session_state:
+    st.session_state.uploaded_audios = [None] * NUM_AUDIO_INPUTS
+if "audio_frames" not in st.session_state:
+    st.session_state.audio_frames = [None] * NUM_AUDIO_INPUTS
 
 for i in range(NUM_AUDIO_INPUTS):
     st.header(PREDEFINED_QUESTIONS[i])
@@ -37,41 +39,51 @@ for i in range(NUM_AUDIO_INPUTS):
         )
         
         if webrtc_ctx.audio_receiver:
-            audio_frames = []
             status_indicator = st.empty()
-            status_indicator.write("Recording...")
-            try:
-                while True:
+
+            # Only start collecting audio if the context is playing
+            if webrtc_ctx.state.playing:
+                status_indicator.write("Recording...")
+                try:
                     audio_frame = webrtc_ctx.audio_receiver.get_frame(timeout=1)
-                    audio_frames.append(audio_frame.to_ndarray().flatten())
-                    if not webrtc_ctx.state.playing:
-                        break
-            except queue.Empty:
-                pass
-            status_indicator.write("Recording stopped.")
-            if audio_frames:
-                audio_data = np.concatenate(audio_frames, axis=0)
-                recorded_audios[i] = audio_data
+                    audio_ndarray = audio_frame.to_ndarray().flatten()
+
+                    # Accumulate audio frames for the current question
+                    if st.session_state.audio_frames[i] is None:
+                        st.session_state.audio_frames[i] = audio_ndarray
+                    else:
+                        st.session_state.audio_frames[i] = np.concatenate(
+                            [st.session_state.audio_frames[i], audio_ndarray]
+                        )
+                except queue.Empty:
+                    pass
+
+            # When the user clicks stop (automatically stops when stream stops)
+            if not webrtc_ctx.state.playing and st.session_state.audio_frames[i] is not None:
+                status_indicator.write("Recording stopped.")
+                st.session_state.recorded_audios[i] = st.session_state.audio_frames[i]
     else:
         uploaded_file = st.file_uploader(f"Upload Audio {i+1}", type=["wav", "mp3"], key=f"uploaded_file_{i}")
         if uploaded_file is not None:
-            uploaded_audios[i] = uploaded_file
+            st.session_state.uploaded_audios[i] = uploaded_file
 
+# Button to submit the audio responses
 if st.button("Submit"):
     st.header("Processing Results")
-    # Combine recorded and uploaded audios
     audio_inputs = []
+    
     for i in range(NUM_AUDIO_INPUTS):
-        if recorded_audios[i] is not None:
+        if st.session_state.recorded_audios[i] is not None:
             st.write(f"Audio {i+1} was recorded.")
-            st.write(f"Recorded audio data shape: {recorded_audios[i].shape}")
-            # Here you can add code to process recorded_audios[i]
-            audio_inputs.append(recorded_audios[i])
-        elif uploaded_audios[i] is not None:
+            st.write(f"Recorded audio data shape: {st.session_state.recorded_audios[i].shape}")
+            # Here you can add code to process the recorded audio
+            audio_inputs.append(st.session_state.recorded_audios[i])
+        elif st.session_state.uploaded_audios[i] is not None:
             st.write(f"Audio {i+1} was uploaded.")
-            st.audio(uploaded_audios[i])
-            # Here you can add code to process uploaded_audios[i]
-            audio_inputs.append(uploaded_audios[i])
+            st.audio(st.session_state.uploaded_audios[i])
+            # Here you can add code to process the uploaded audio
+            audio_inputs.append(st.session_state.uploaded_audios[i])
         else:
             st.write(f"No audio input for Audio {i+1}.")
+    
     st.success("All audios have been processed.")
