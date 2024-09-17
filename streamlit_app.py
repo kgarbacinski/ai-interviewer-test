@@ -37,8 +37,12 @@ def main():
 
         # If there is a recorded audio, store it in the dictionary
         if len(audio) > 0:
-            st.audio(audio.tobytes())
-            audio_recordings[question] = audio.tobytes()
+            # To save audio to a file, use pydub export method:
+            audio.export(f"audio_{idx}.wav", format="wav")
+
+            #play the audio
+            st.audio(audio.export().read())
+            audio_recordings[question] = audio.export().tobytes()
 
     # Submit button to send the recordings
     if st.button("Submit"):
