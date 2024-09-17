@@ -9,59 +9,52 @@ questions = [
     "What are your goals for this week?"
 ]
 
-# Initialize session state for audio responses and active recording question
+# Initialize session state for audio responses
 if 'audio_responses' not in st.session_state:
-    st.session_state.audio_responses = {}
+    st.session_state.audio_responses = {idx: None for idx in range(len(questions))}
 
-if 'active_question' not in st.session_state:
-    st.session_state.active_question = None
-
-if 'recorder_active' not in st.session_state:
-    st.session_state.recorder_active = {idx: False for idx in range(len(questions))}
+if 'recording_active' not in st.session_state:
+    st.session_state.recording_active = {idx: False for idx in range(len(questions))}
 
 st.title("Voice-based Questionnaire")
 
-# Function to reset all recorder states
-def reset_recorders():
+# Function to stop all recordings
+def stop_all_recordings():
     for idx in range(len(questions)):
-        st.session_state.recorder_active[idx] = False
+        st.session_state.recording_active[idx] = False
 
 # Iterate through the questions
 for idx, question in enumerate(questions):
     st.subheader(f"Question {idx + 1}: {question}")
     
     # Check if the user has already recorded an answer
-    if question in st.session_state.audio_responses:
+    if st.session_state.audio_responses[idx]:
         st.write("Recorded Answer: (Re-record if needed)")
-        st.audio(st.session_state.audio_responses[question], format="audio/wav")
+        st.audio(st.session_state.audio_responses[idx], format="audio/wav")
     else:
         st.write("No answer recorded yet.")
 
-    # Create a button to record answer for each question
-    if st.button(f"Record Answer for Question {idx + 1}", key=f"record_btn_{idx}"):
-        reset_recorders()  # Reset all recorder states
-        st.session_state.active_question = idx  # Set active question
-        st.session_state.recorder_active[idx] = True  # Activate this recorder
+    # Start recording button
+    if not st.session_state.recording_active[idx] and st.button(f"Start Recording for Question {idx + 1}", key=f"start_btn_{idx}"):
+        stop_all_recordings()  # Stop any active recordings
+        st.session_state.recording_active[idx] = True  # Activate this question's recorder
 
-    # If this is the active question, show the recorder below it
-    if st.session_state.recorder_active[idx]:
-        st.write(f"Recording for Question {idx + 1}:")
-        audio_bytes = st_audiorec()
-
-        # Save the recorded audio in session state specific to this question
-        if audio_bytes is not None:
-            st.session_state.audio_responses[questions[idx]] = audio_bytes
+    # Stop recording button
+    if st.session_state.recording_active[idx] and st.button(f"Stop Recording for Question {idx + 1}", key=f"stop_btn_{idx}"):
+        audio_bytes = st_audiorec()  # Trigger the recording
+        if audio_bytes:
+            st.session_state.audio_responses[idx] = audio_bytes  # Save the recorded audio
             st.success(f"Recording for Question {idx + 1} saved!")
-            reset_recorders()  # Reset the recorders after saving
+        st.session_state.recording_active[idx] = False  # Deactivate recorder after saving
 
 # Submit button
 if st.button("Submit All Responses"):
     # Check if all questions have been answered
-    if all(question in st.session_state.audio_responses for question in questions):
+    if all(st.session_state.audio_responses[idx] for idx in range(len(questions))):
         st.write("Sending responses to API...")
         
         for idx, question in enumerate(questions):
-            audio = st.session_state.audio_responses[question]
+            audio = st.session_state.audio_responses[idx]
             # Prepare the audio file for upload
             files = {
                 'audio': ('response.wav', audio, 'audio/wav')
