@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from st_audiorec import st_audiorec
+from st_audiorec import st_audiorec  # Correct library name
 
 # Hardcoded questions
 questions = [
@@ -20,18 +20,17 @@ for idx, question in enumerate(questions):
     
     # Check if the user has already recorded an answer
     if question in st.session_state.audio_responses:
-        st.audio(st.session_state.audio_responses[question], format="audio/wav")
-        st.write("Recorded Answer:")
-        st.write(st.session_state.audio_responses[question])
+        st.write("Recorded Answer: (Re-record if needed)")
+        # No need to use st.audio() because st_audiorec has a built-in player
     
     # Prompt to record answer
-    audio_bytes = st_audiorec()
+    st.write("Click the button below to record your answer.")
+    audio_bytes = st_audiorec()  # Automatically provides the recording and playback interface
     
     if audio_bytes:
-        # Save the audio response
+        # Save the audio response to session state
         st.session_state.audio_responses[question] = audio_bytes
-        st.audio(audio_bytes, format="audio/wav")
-        st.success("Recording saved!")
+        st.success(f"Recording for Question {idx + 1} saved!")
 
 # Submit button
 if st.button("Submit All Responses"):
