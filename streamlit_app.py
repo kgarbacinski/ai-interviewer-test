@@ -42,7 +42,7 @@ def main():
 
             #play the audio
             st.audio(audio.export().read())
-            audio_recordings[question] = audio.export().read().tobytes()
+            audio_recordings[question] = audio.export().read()
 
     # Submit button to send the recordings
     if st.button("Submit"):
