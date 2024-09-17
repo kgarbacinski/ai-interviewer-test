@@ -22,17 +22,18 @@ class AudioProcessor(AudioProcessorBase):
         self.frames = []
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        # Convert audio frame to numpy array and flatten
-        audio_data = frame.to_ndarray().flatten()
-
-        # Accumulate frames
+        # Convert audio frame to numpy array
+        audio_data = frame.to_ndarray()
+        
+        # Append to the frames buffer
         self.frames.append(audio_data)
 
         return frame
 
     def get_audio_data(self):
-        if self.frames:
-            return np.concatenate(self.frames)
+        # Combine all the audio frames
+        if len(self.frames) > 0:
+            return np.concatenate(self.frames, axis=1)
         return None
 
 
