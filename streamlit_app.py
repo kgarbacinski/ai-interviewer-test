@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
-import json
-from st_audiorec import st_audiorec
+from streamlit_audiorec import st_audiorec
 
 # Hardcoded questions
 questions = [
@@ -24,16 +23,15 @@ for idx, question in enumerate(questions):
         st.audio(st.session_state.audio_responses[question], format="audio/wav")
         st.write("Recorded Answer:")
         st.write(st.session_state.audio_responses[question])
-    else:
-        # Prompt to record answer
-        st.write("Click the button below to record your answer.")
-        audio_bytes = st_audiorec(key=f"audio_{idx}")
-        
-        if audio_bytes:
-            # Save the audio response
-            st.session_state.audio_responses[question] = audio_bytes
-            st.audio(audio_bytes, format="audio/wav")
-            st.success("Recording saved!")
+    
+    # Prompt to record answer
+    audio_bytes = st_audiorec()
+    
+    if audio_bytes:
+        # Save the audio response
+        st.session_state.audio_responses[question] = audio_bytes
+        st.audio(audio_bytes, format="audio/wav")
+        st.success("Recording saved!")
 
 # Submit button
 if st.button("Submit All Responses"):
