@@ -1,109 +1,57 @@
 import streamlit as st
-import requests
 from audiorecorder import audiorecorder
+import requests
 import base64
 
-# Hardcoded questions
-questions = [
-    "What is your name?",
-    "How do you feel today?",
-    "What are your goals for this week?"
-]
+# Function to send audio to the external API
+def send_to_api(question, audio_data):
+    api_url = "https://your-api-endpoint.com/upload"  # Replace with actual API endpoint
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "question": question,
+        "audio": base64.b64encode(audio_data).decode('utf-8')
+    }
+    response = requests.post(api_url, json=payload, headers=headers)
+    return response.status_code, response.text
 
-# Initialize session state for audio responses and current question index
-if 'audio_responses' not in st.session_state:
-    st.session_state.audio_responses = {}
+# Main function for the Streamlit app
+def main():
+    st.title("Audio Recording Questionnaire")
 
-if 'current_question' not in st.session_state:
-    st.session_state.current_question = 0  # Start with the first question
+    # Hardcoded questions
+    questions = [
+        "What is your name?",
+        "What is your favorite color?",
+        "Tell us about your favorite hobby."
+    ]
 
-if 'recordings' not in st.session_state:
-    st.session_state.recordings = {idx: None for idx in range(len(questions))}
+    # Dictionary to store the recordings
+    audio_recordings = {}
 
-st.title("Voice-based Questionnaire")
-
-
-def move_to_next_question():
-    """Helper function to move to the next question"""
-    if st.session_state.current_question < len(questions) - 1:
-        st.session_state.current_question += 1
-    else:
-        st.session_state.current_question = "submit"  # Go to submit page
-
-
-# Get the current question index
-current_idx = st.session_state.current_question
-
-# Check if we are still asking questions or ready to submit
-if isinstance(current_idx, int):
-    st.subheader(f"Question {current_idx + 1}: {questions[current_idx]}")
-
-    # Check if the user has already recorded an answer for this question
-    if st.session_state.recordings[current_idx] is not None:
-        st.write("Recorded Answer: (Re-record if needed)")
-        st.audio(st.session_state.recordings[current_idx], format="audio/wav")
-    else:
-        st.write("No answer recorded yet.")
-
-    # Audio recorder for the current question using audiorecorder library
-    audio = audiorecorder(start_prompt="Start recording", stop_prompt="Stop recording", pause_prompt="", show_visualizer=True, key=None)
-
-    # Save the recording once it's done
-    if len(audio) > 0:
-        st.write("Recording complete")
-        # The audiorecorder returns the recording as bytes, we can directly store it
-        st.session_state.recordings[current_idx] = audio
-
-        # Optionally play back the recorded audio to the user
-        st.audio(audio.export().read(), format="audio/wav")
-
-    # Button to move to the next question
-    if st.button("Next Question"):
-        if st.session_state.recordings[current_idx] is not None:
-            move_to_next_question()
-        else:
-            st.error("Please record an answer before moving to the next question.")
-
-else:
-    # Final submission page
-    st.subheader("Review and Submit Your Responses")
-
-    # Display all recorded responses
+    # Loop through the questions and create the corresponding recording button
     for idx, question in enumerate(questions):
-        st.write(f"**Question {idx + 1}: {question}**")
-        if st.session_state.recordings[idx] is not None:
-            st.audio(st.session_state.recordings[idx], format="audio/wav")
+        st.write(f"**Question {idx+1}:** {question}")
+
+        # Record button for the current question
+        audio = audiorecorder("Record", "Recording...")
+
+        # If there is a recorded audio, store it in the dictionary
+        if len(audio) > 0:
+            st.audio(audio.tobytes())
+            audio_recordings[question] = audio.tobytes()
+
+    # Submit button to send the recordings
+    if st.button("Submit"):
+        if audio_recordings:
+            st.write("Submitting your responses...")
+            for question, audio_data in audio_recordings.items():
+                status_code, response_text = send_to_api(question, audio_data)
+                if status_code == 200:
+                    st.success(f"Successfully submitted answer for: {question}")
+                else:
+                    st.error(f"Failed to submit answer for: {question}, Error: {response_text}")
         else:
-            st.write("_No answer recorded._")
+            st.warning("Please record at least one response before submitting.")
 
-    # Submit button
-    if st.button("Submit All Responses"):
-        # Check if all questions have been answered
-        if all(st.session_state.recordings[idx] is not None for idx in range(len(questions))):
-            st.write("Sending responses to API...")
-
-            for idx, question in enumerate(questions):
-                audio = st.session_state.recordings[idx]
-                # Prepare the audio file for upload
-                files = {
-                    'audio': ('response.wav', audio, 'audio/wav')
-                }
-                data = {
-                    'question': question
-                }
-
-                try:
-                    response = requests.post(
-                        "https://api.example.com/submit-audio",  # Replace with your API endpoint
-                        files=files,
-                        data=data
-                    )
-                    st.write(f"Sent response for '{question}' with status {response.status_code}")
-                except Exception as e:
-                    st.error(f"Failed to send response for '{question}': {e}")
-        else:
-            st.error("Please record responses for all questions before submitting.")
-
-    # Option to go back and review questions
-    if st.button("Go Back"):
-        st.session_state.current_question = len(questions) - 1  # Go back to the last question
+if __name__ == "__main__":
+    main()
