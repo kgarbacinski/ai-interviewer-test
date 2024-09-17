@@ -16,6 +16,9 @@ if 'audio_responses' not in st.session_state:
 if 'active_question' not in st.session_state:
     st.session_state.active_question = None
 
+if 'recording_states' not in st.session_state:
+    st.session_state.recording_states = {idx: None for idx in range(len(questions))}
+
 st.title("Voice-based Questionnaire")
 
 # Iterate through the questions
@@ -32,15 +35,17 @@ for idx, question in enumerate(questions):
     # Create a button to record answer for each question
     if st.button(f"Record Answer for Question {idx + 1}", key=f"record_btn_{idx}"):
         st.session_state.active_question = idx
+        st.session_state.recording_states[idx] = None  # Reset recording state for this question
 
     # If this is the active question, show the recorder below it
     if st.session_state.active_question == idx:
         st.write(f"Recording for Question {idx + 1}:")
         audio_bytes = st_audiorec()
 
-        # If audio is recorded, save it in session state
-        if audio_bytes is not None:
+        # If audio is recorded, save it in session state for the current question
+        if audio_bytes is not None and st.session_state.recording_states[idx] is None:
             st.session_state.audio_responses[questions[idx]] = audio_bytes
+            st.session_state.recording_states[idx] = 'done'  # Mark this question as recorded
             st.success(f"Recording for Question {idx + 1} saved!")
             # Reset active question only after saving, to avoid UI issues
             st.session_state.active_question = None
