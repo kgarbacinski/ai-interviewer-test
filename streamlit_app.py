@@ -19,10 +19,6 @@ if 'active_question' not in st.session_state:
 if 'recorder_active' not in st.session_state:
     st.session_state.recorder_active = {idx: False for idx in range(len(questions))}
 
-if 'recording_cache' not in st.session_state:
-    st.session_state.recording_cache = None  # Store current recording before finalizing
-
-
 st.title("Voice-based Questionnaire")
 
 # Function to reset all recorder states
@@ -52,12 +48,11 @@ for idx, question in enumerate(questions):
         st.write(f"Recording for Question {idx + 1}:")
         audio_bytes = st_audiorec()
 
-        # Save the recorded audio in session state specific to this question
+        # Ensure the recording is not None before saving
         if audio_bytes is not None:
             st.session_state.audio_responses[questions[idx]] = audio_bytes
             st.success(f"Recording for Question {idx + 1} saved!")
             reset_recorders()  # Reset the recorders after saving
-            st.session_state.recording_cache = None  # Clear the cache after saving
 
 # Submit button
 if st.button("Submit All Responses"):
