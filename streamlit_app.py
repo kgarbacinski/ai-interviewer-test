@@ -21,10 +21,6 @@ if 'recorder_active' not in st.session_state:
 
 st.title("Voice-based Questionnaire")
 
-# Function to reset all recorder states
-def reset_recorders():
-    for idx in range(len(questions)):
-        st.session_state.recorder_active[idx] = False
 
 # Iterate through the questions
 for idx, question in enumerate(questions):
@@ -39,7 +35,6 @@ for idx, question in enumerate(questions):
 
     # Create a button to record answer for each question
     if st.button(f"Record Answer for Question {idx + 1}", key=f"record_btn_{idx}"):
-        reset_recorders()  # Reset all recorder states
         st.session_state.active_question = idx  # Set active question
         st.session_state.recorder_active[idx] = True  # Activate this recorder
 
@@ -52,7 +47,8 @@ for idx, question in enumerate(questions):
         if audio_bytes is not None:
             st.session_state.audio_responses[questions[idx]] = audio_bytes
             st.success(f"Recording for Question {idx + 1} saved!")
-            reset_recorders()  # Reset the recorders after saving
+
+            audio_bytes = None
 
 # Submit button
 if st.button("Submit All Responses"):
