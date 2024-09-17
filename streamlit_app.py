@@ -69,6 +69,7 @@ if st.button("Submit All Responses"):
         for question, filename in audio_responses.items():
             # Read the saved audio file
             with open(filename, 'rb') as f:
+                pass
                 # Example of sending audio to an API (adjust URL and payload accordingly)
                 # response = requests.post(
                 #     "https://api.example.com/submit-audio",
