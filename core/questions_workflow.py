@@ -1,3 +1,5 @@
+import time
+
 import requests
 import streamlit as st
 from audiorecorder import audiorecorder
@@ -68,6 +70,7 @@ def run_workflow():
                 if status_code == 201:
                     st.success(f"Successfully submitted answer for audio: {filename}")
                     file_id = str(response_text['file']['id'])
+                    time.sleep(10)
                     status_code, response_text = get_emotions(file_id)
 
                     if status_code == 200:
