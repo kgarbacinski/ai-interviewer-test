@@ -1,21 +1,21 @@
+import requests
 import streamlit as st
 from audiorecorder import audiorecorder
-import requests
-import base64
-
-# Function to send audio to the external API
-def send_to_api(question, audio_data):
-    api_url = "https://your-api-endpoint.com/upload"  # Replace with actual API endpoint
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "question": question,
-        "audio": base64.b64encode(audio_data).decode('utf-8')
-    }
-    response = requests.post(api_url, json=payload, headers=headers)
-    return response.status_code, response.text
 
 
-# Main function for the Streamlit app
+def send_to_api(filename: str):
+    response = requests.post(
+        "https://api.hume.ai/v0/registry/files/upload",
+        headers={
+            "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
+        },
+        files={
+            'file': (filename, open(filename, 'rb'), 'audio/wav')
+        }
+    )
+    return response.status_code, response.json()
+
+
 def run_workflow():
     st.title("Audio Recording Questionnaire")
     st.image("images/snickers.png", caption="Images showing a snickers bar")
@@ -39,25 +39,24 @@ def run_workflow():
 
         # If there is a recorded audio, store it in the dictionary
         if len(audio) > 0:
+            filename = f"audio_{idx}.wav"
+
             # To save audio to a file, use pydub export method:
-            audio.export(f"audio_{idx}.wav", format="wav")
+            audio.export(filename, format="wav")
 
-            #play the audio
             st.audio(audio.export().read())
-            audio_recordings[question] = audio.export().read()
+            audio_recordings[filename] = audio.export().read()
 
-    # Submit button to send the recordings
     if st.button("Submit"):
         if audio_recordings:
             st.write("Submitting your responses...")
-            for question, audio_data in audio_recordings.items():
-                status_code, response_text = send_to_api(question, audio_data)
+            for filename, audio_data in audio_recordings.items():
+                status_code, response_text = send_to_api(filename)
                 if status_code == 200:
-                    st.success(f"Successfully submitted answer for: {question}")
+                    st.success(f"Successfully submitted answer for audio: {filename}")
+                    file_id = response_text['file']['id']
+                    print(file_id)
                 else:
-                    st.error(f"Failed to submit answer for: {question}, Error: {response_text}")
+                    st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
         else:
             st.warning("Please record at least one response before submitting.")
-
-# if __name__ == "__main__":
-#     main()
