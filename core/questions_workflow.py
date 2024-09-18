@@ -13,6 +13,7 @@ def send_to_api(filename: str):
             'file': (filename, open(filename, 'rb'), 'audio/wav')
         }
     )
+    st.write(open(filename, 'rb'))
     return response.status_code, response.json()
 
 
