@@ -25,7 +25,7 @@ def get_emotions(file_id: str):
         },
     )
 
-    return response.status_code, response.json()
+    return response.status_code, response.text
 
 
 def run_workflow():
