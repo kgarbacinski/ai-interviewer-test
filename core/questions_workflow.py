@@ -18,6 +18,7 @@ def send_to_api(filename: str):
 
 
 def get_emotions(file_id: str):
+    st.write(f"Getting emotions for file: {file_id}")
     response = requests.get(
         f"https://api.hume.ai/v0/registry/files/{file_id}/predictions",
         headers={
