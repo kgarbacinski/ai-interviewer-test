@@ -70,7 +70,7 @@ def run_workflow():
                     status_code, response_text = get_emotions(file_id)
 
                     if status_code == 200:
-                        st.write(response_text)
+                        st.write(str(response_text))
                     else:
                         st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
                 else:
