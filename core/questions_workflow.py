@@ -15,7 +15,6 @@ def send_to_api(filename: str):
             'file': (filename, open(filename, 'rb'), 'audio/wav')
         }
     )
-    st.write(response.status_code)
     return response.status_code, response.json()
 
 
@@ -27,7 +26,6 @@ def get_emotions(file_id: str):
             "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
         },
     )
-    st.write(response.status_code)
     return response.status_code, response.text
 
 
@@ -68,7 +66,7 @@ def run_workflow():
             for filename, audio_data in audio_recordings.items():
                 status_code, response_text = send_to_api(filename)
                 if status_code == 201:
-                    st.success(f"Successfully submitted answer for audio: {filename}")
+                    st.success(f"Successfully submitted answer for audio: {filename}. Processing your response...")
                     file_id = str(response_text['file']['id'])
 
                     time.sleep(5) # hume ai takes some time to process the audio
