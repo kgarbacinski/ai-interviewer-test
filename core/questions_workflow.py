@@ -24,7 +24,7 @@ def get_emotions(file_id: str):
             "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
         },
     )
-
+    st.write(response.status_code)
     return response.status_code, response.text
 
 
