@@ -56,6 +56,7 @@ def run_workflow():
                     st.success(f"Successfully submitted answer for audio: {filename}")
                     file_id = response_text['file']['id']
                     print(file_id)
+                    st.success(f"File ID: {file_id}")
                 else:
                     st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
         else:
