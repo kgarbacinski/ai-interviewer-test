@@ -13,7 +13,7 @@ def send_to_api(filename: str):
             'file': (filename, open(filename, 'rb'), 'audio/wav')
         }
     )
-    st.write(open(filename, 'rb'))
+    st.write(response.status_code)
     return response.status_code, response.json()
 
 
@@ -56,7 +56,6 @@ def run_workflow():
                 if status_code == 200:
                     st.success(f"Successfully submitted answer for audio: {filename}")
                     file_id = response_text['file']['id']
-                    print(file_id)
                     st.success(f"File ID: {file_id}")
                 else:
                     st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
