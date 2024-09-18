@@ -17,6 +17,17 @@ def send_to_api(filename: str):
     return response.status_code, response.json()
 
 
+def get_emotions(file_id: str):
+    response = requests.get(
+        f"https://api.hume.ai/v0/registry/files/{file_id}/predictions",
+        headers={
+            "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
+        },
+    )
+
+    return response.status_code, response.json()
+
+
 def run_workflow():
     st.title("Audio Recording Questionnaire")
     st.image("images/snickers.png", caption="Images showing a snickers bar")
@@ -56,7 +67,12 @@ def run_workflow():
                 if status_code == 201:
                     st.success(f"Successfully submitted answer for audio: {filename}")
                     file_id = response_text['file']['id']
-                    st.success(f"Uploaded file ID: {file_id}")
+                    status_code, response_text = get_emotions(file_id)
+
+                    if status_code == 200:
+                        st.write(response_text)
+                    else:
+                        st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
                 else:
                     st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
         else:
