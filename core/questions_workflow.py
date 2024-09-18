@@ -70,7 +70,9 @@ def run_workflow():
                 if status_code == 201:
                     st.success(f"Successfully submitted answer for audio: {filename}")
                     file_id = str(response_text['file']['id'])
-                    time.sleep(10)
+
+                    time.sleep(5) # hume ai takes some time to process the audio
+
                     status_code, response_text = get_emotions(file_id)
 
                     if status_code == 200:
