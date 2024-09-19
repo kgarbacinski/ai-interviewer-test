@@ -32,8 +32,8 @@ def get_emotions(file_id: str):
 
 
 def show_emotions_stats(grouped_predictions: list):
+    st.write("XXX", grouped_predictions)
     for entry in grouped_predictions:
-
         predictions = entry["predictions"]
         text = predictions['text']
         emotions = predictions['emotions']
@@ -98,7 +98,7 @@ def run_workflow():
                         st.write(str(response_text))
                         show_emotions_stats(response_text['models']['prosody']['grouped_predictions'])
                     else:
-                            st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
+                        st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
                 else:
                     st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
         else:
