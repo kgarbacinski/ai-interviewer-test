@@ -1,4 +1,4 @@
 streamlit
-streamlit-webrtc
-streamlit-audiorec
 streamlit-audiorecorder
+pandas
+matplotlib
