@@ -1,4 +1,3 @@
-import os
 import time
 
 import pandas as pd
@@ -12,7 +11,7 @@ def send_to_api(filename: str):
     response = requests.post(
         "https://api.hume.ai/v0/registry/files/upload",
         headers={
-            "X-Hume-Api-Key": os.getenv("HUME_API_KEY")
+            "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
         },
         files={
             'file': (filename, open(filename, 'rb'), 'audio/wav')
