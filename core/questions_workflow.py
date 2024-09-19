@@ -1,8 +1,10 @@
 import time
 
+import pandas as pd
 import requests
 import streamlit as st
 from audiorecorder import audiorecorder
+import matplotlib.pyplot as plt
 
 
 def send_to_api(filename: str):
@@ -26,7 +28,26 @@ def get_emotions(file_id: str):
             "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
         },
     )
-    return response.status_code, response.text
+    return response.status_code, response.json()
+
+
+def show_emotions_stats(grouped_predictions: list):
+    for entry in grouped_predictions:
+
+        predictions = entry["predictions"]
+        text = predictions['text']
+        emotions = predictions['emotions']
+
+        st.write(f"Emotions for text: {text}")
+        df = pd.DataFrame(emotions)
+        top_4_emotions = df.nlargest(4, 'score')
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.barh(top_4_emotions['name'], top_4_emotions['score'], color='skyblue')
+        ax.set_xlabel('Score')
+        ax.set_title('Top 4 Emotions by Score')
+        ax.invert_yaxis()
+        st.pyplot(fig)
 
 
 def run_workflow():
@@ -75,8 +96,9 @@ def run_workflow():
 
                     if status_code == 200:
                         st.write(str(response_text))
+                        show_emotions_stats(response_text['models']['prosody']['grouped_predictions'])
                     else:
-                        st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
+                            st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
                 else:
                     st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
         else:
