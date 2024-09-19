@@ -32,22 +32,21 @@ def get_emotions(file_id: str):
 
 
 def show_emotions_stats(grouped_predictions: list):
-    st.write("XXX", str(grouped_predictions))
     for entry in grouped_predictions:
-        predictions = entry["predictions"]
-        text = predictions['text']
-        emotions = predictions['emotions']
+        for prediction in entry["predictions"]:
+            text = prediction['text']
+            emotions = prediction['emotions']
 
-        st.write(f"Emotions for text: {text}")
-        df = pd.DataFrame(emotions)
-        top_4_emotions = df.nlargest(4, 'score')
+            st.write(f"Emotions for text: {text}")
+            df = pd.DataFrame(emotions)
+            top_4_emotions = df.nlargest(4, 'score')
 
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.barh(top_4_emotions['name'], top_4_emotions['score'], color='skyblue')
-        ax.set_xlabel('Score')
-        ax.set_title('Top 4 Emotions by Score')
-        ax.invert_yaxis()
-        st.pyplot(fig)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.barh(top_4_emotions['name'], top_4_emotions['score'], color='skyblue')
+            ax.set_xlabel('Score')
+            ax.set_title('Top 4 Emotions by Score')
+            ax.invert_yaxis()
+            st.pyplot(fig)
 
 
 def run_workflow():
