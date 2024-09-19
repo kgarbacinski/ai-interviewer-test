@@ -32,7 +32,7 @@ def get_emotions(file_id: str):
 
 
 def show_emotions_stats(grouped_predictions: list):
-    st.write("XXX", grouped_predictions)
+    st.write("XXX", str(grouped_predictions))
     for entry in grouped_predictions:
         predictions = entry["predictions"]
         text = predictions['text']
@@ -92,14 +92,13 @@ def run_workflow():
 
                     time.sleep(5) # hume ai takes some time to process the audio
 
-                    status_code, response_text = get_emotions(file_id)
+                    status_code, response_json = get_emotions(file_id)
 
                     if status_code == 200:
-                        st.write(str(response_text))
-                        show_emotions_stats(response_text['models']['prosody']['grouped_predictions'])
+                        show_emotions_stats(response_json['models']['prosody']['grouped_predictions'])
                     else:
-                        st.error(f"Failed to get emotions for audio: {filename}, Error: {response_text}")
+                        st.error(f"Failed to get emotions for audio: {filename}, Error: {str(response_json)}")
                 else:
-                    st.error(f"Failed to submit answer for audio: {filename}, Error: {response_text}")
+                    st.error(f"Failed to submit answer for audio: {filename}, Error: {str(response_json)}")
         else:
             st.warning("Please record at least one response before submitting.")
