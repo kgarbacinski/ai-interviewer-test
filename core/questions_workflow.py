@@ -51,7 +51,7 @@ def show_emotions_stats(grouped_predictions: list):
 
 
 def run_workflow():
-    st.title("Audio Recording Questionnaire")
+    st.title("Questions Workflow")
     st.image("images/snickers.png", caption="Images showing a snickers bar")
 
     # Hardcoded questions
