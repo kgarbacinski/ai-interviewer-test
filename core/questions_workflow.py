@@ -48,16 +48,9 @@ def show_emotions_stats(grouped_predictions: list):
             st.pyplot(fig)
 
 
-def run_workflow():
-    st.title("Questions Workflow")
-    st.image("images/snickers.png", caption="Images showing a snickers bar")
-
-    # Hardcoded questions
-    questions = [
-        "What is your name?",
-        "What is your favorite color?",
-        "Tell us about your favorite hobby."
-    ]
+def run_workflow(*, conversation_name: str, image_name: str, questions: list):
+    st.title(conversation_name)
+    st.image(image_name, caption=f"Images showing a {image_name}")
 
     # Dictionary to store the recordings
     audio_recordings = {}
