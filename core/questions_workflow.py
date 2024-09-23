@@ -48,6 +48,25 @@ def show_emotions_stats(grouped_predictions: list):
             st.pyplot(fig)
 
 
+def process_responses(audio_recordings: dict):
+    for nr, filename, audio_data in enumerate(audio_recordings.items()):
+        status_code, response_text = send_to_api(filename)
+        if status_code == 201:
+            st.success(f"Successfully submitted answer for question nr {nr}. Processing your response...")
+            file_id = str(response_text['file']['id'])
+
+            time.sleep(5)  # hume ai takes some time to process the audio
+
+            status_code, response_json = get_emotions(file_id)
+
+            if status_code == 200:
+                show_emotions_stats(response_json['models']['prosody']['grouped_predictions'])
+            else:
+                st.error(f"Failed to get emotions for audio: {filename}, Error: {str(response_json)}")
+        else:
+            st.error(f"Failed to submit answer for audio: {filename}, Error: {str(response_json)}")
+
+
 def run_workflow(*, conversation_name: str, image_name: str, questions: list):
     st.title(conversation_name)
     st.image(image_name, caption=f"Images showing a {image_name}")
@@ -75,21 +94,6 @@ def run_workflow(*, conversation_name: str, image_name: str, questions: list):
     if st.button("Submit"):
         if audio_recordings:
             st.write("Submitting your responses...")
-            for filename, audio_data in audio_recordings.items():
-                status_code, response_text = send_to_api(filename)
-                if status_code == 201:
-                    st.success(f"Successfully submitted answer for audio: {filename}. Processing your response...")
-                    file_id = str(response_text['file']['id'])
-
-                    time.sleep(5) # hume ai takes some time to process the audio
-
-                    status_code, response_json = get_emotions(file_id)
-
-                    if status_code == 200:
-                        show_emotions_stats(response_json['models']['prosody']['grouped_predictions'])
-                    else:
-                        st.error(f"Failed to get emotions for audio: {filename}, Error: {str(response_json)}")
-                else:
-                    st.error(f"Failed to submit answer for audio: {filename}, Error: {str(response_json)}")
+            process_responses(audio_recordings)
         else:
             st.warning("Please record at least one response before submitting.")
