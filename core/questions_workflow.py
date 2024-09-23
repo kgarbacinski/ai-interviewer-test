@@ -49,7 +49,9 @@ def show_emotions_stats(grouped_predictions: list):
 
 
 def process_responses(audio_recordings: dict):
-    for nr, filename, audio_data in enumerate(audio_recordings.items()):
+    for nr, items in enumerate(audio_recordings.items()):
+        filename, audio_data = items
+
         status_code, response_text = send_to_api(filename)
         if status_code == 201:
             st.success(f"Successfully submitted answer for question nr {nr}. Processing your response...")
