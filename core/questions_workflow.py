@@ -69,7 +69,7 @@ def process_responses(audio_recordings: dict):
             st.error(f"Failed to submit answer for audio: {filename}, Error: {str(response_json)}")
 
 
-def run_workflow(*, conversation_name: str, image_name: str, questions: list):
+def run_workflow(*, conversation_name: str, image_name: str, questions: list, questions_audio_files: list):
     st.title(conversation_name)
     st.image(image_name, caption=f"Images showing a {image_name}")
 
@@ -77,8 +77,11 @@ def run_workflow(*, conversation_name: str, image_name: str, questions: list):
     audio_recordings = {}
 
     # Loop through the questions and create the corresponding recording button
-    for idx, question in enumerate(questions):
+    for idx, (question, audio_file) in enumerate(zip(questions, questions_audio_files)):
         st.write(f"**Question {idx+1}:** {question}")
+
+        if audio_file:
+            st.audio(audio_file, format='audio/wav')
 
         # Record button for the current question with unique key
         audio = audiorecorder("Record", "Recording...", key=f"audio_{idx}")
