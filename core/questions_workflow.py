@@ -5,7 +5,6 @@ import requests
 import streamlit as st
 from audiorecorder import audiorecorder
 import matplotlib.pyplot as plt
-from streamlit.components.v1 import components
 
 
 def send_to_api(filename: str):
@@ -82,17 +81,7 @@ def run_workflow(*, conversation_name: str, image_name: str, questions: list, qu
         st.write(f"**Question {idx+1}:** {question}")
 
         if audio_file:
-            audio_element = f"""
-                    <audio id="questionAudio{idx}" src="{audio_file}" onended="startRecording({idx})" preload="auto"></audio>
-                    <script>
-                        function startRecording(idx) {{
-                            setTimeout(function() {{
-                                document.getElementById('audio_{idx}').click();
-                            }}, 100);  // slight delay to ensure audio has ended
-                        }}
-                    </script>
-                    """
-            components.html(audio_element, height=0)
+            st.audio(audio_file, format='audio/wav')
 
         # Record button for the current question with unique key
         audio = audiorecorder("Record", "Recording...", key=f"audio_{idx}")
