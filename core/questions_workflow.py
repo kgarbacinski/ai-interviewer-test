@@ -54,7 +54,7 @@ def process_responses(audio_recordings: dict):
 
         status_code, response_text = send_to_api(filename)
         if status_code == 201:
-            st.success(f"Successfully submitted answer for question nr {nr}. Processing your response...")
+            st.success(f"Successfully submitted answer for question nr {nr + 1}. Processing your response...")
             file_id = str(response_text['file']['id'])
 
             time.sleep(5)  # hume ai takes some time to process the audio
