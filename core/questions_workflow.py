@@ -11,7 +11,7 @@ def send_to_api(filename: str):
     response = requests.post(
         "https://api.hume.ai/v0/registry/files/upload",
         headers={
-            "X-Hume-Api-Key": "BBSW8A0GEX4B4X0DDn2ySxJdcqdJxiau5lVNX6BerXIkn962"
+            "X-Hume-Api-Key": st.secrets["HUME_API_KEY"]
         },
         files={
             'file': (filename, open(filename, 'rb'), 'audio/wav')
@@ -57,7 +57,7 @@ def process_responses(audio_recordings: dict):
             st.success(f"Successfully submitted answer for question nr {nr + 1}. Processing your response...")
             file_id = str(response_text['file']['id'])
 
-            time.sleep(5)  # hume ai takes some time to process the audio
+            time.sleep(7)  # hume ai takes some time to process the audio
 
             status_code, response_json = get_emotions(file_id)
 
