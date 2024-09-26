@@ -1,7 +1,6 @@
 import streamlit as st
 
 
-# Homepage function
 def main():
     st.title("Intro")
     st.audio("audios/intro.wav", format='audio/wav')
