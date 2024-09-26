@@ -1,6 +1,6 @@
 # 🎈 AI Interviewer 
 
-Application created to predict emotions from user' voice. Integrated with Streamlit and Hume AI. 
+Application created to predict emotions from users' voices. Integrated with Streamlit and Hume AI. 
 
 ### How to run it on your own machine
 
